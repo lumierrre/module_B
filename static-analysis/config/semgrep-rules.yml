@@ -1,0 +1,114 @@
+rules:
+- id: bank.unverified-user-header
+  languages:
+  - python
+  message: Identity is derived from a client-controlled header; verify authentication.
+  severity: ERROR
+  metadata:
+    cwe: CWE-306
+    category: security
+    review_required: true
+  pattern: return int(x_user_id)
+- id: bank.balance-read-before-debit
+  languages:
+  - python
+  message: 'Review race condition: balance read without row lock before debit.'
+  severity: ERROR
+  metadata:
+    cwe: CWE-362
+    category: security
+    review_required: true
+  pattern: bal = await $CONN.fetchval("SELECT balance_cents FROM accounts WHERE id=$1",
+    $ID)
+- id: bank.unconditional-debit
+  languages:
+  - python
+  message: Debit lacks sufficient-balance predicate; review locking.
+  severity: ERROR
+  metadata:
+    cwe: CWE-362
+    category: security
+    review_required: true
+  pattern: await $CONN.execute("UPDATE accounts SET balance_cents = balance_cents
+    - $1 WHERE id=$2", $AMOUNT, $ID)
+- id: bank.hardcoded-postgres-password
+  languages:
+  - generic
+  message: Hardcoded PostgreSQL password.
+  severity: ERROR
+  metadata:
+    cwe: CWE-798
+    category: security
+    review_required: true
+  pattern-regex: POSTGRES_PASSWORD:\s*postgres\b
+- id: bank.hardcoded-dsn
+  languages:
+  - generic
+  message: Hardcoded privileged PostgreSQL DSN.
+  severity: ERROR
+  metadata:
+    cwe: CWE-798
+    category: security
+    review_required: true
+  pattern-regex: postgresql://postgres:postgres@
+- id: bank.published-postgres
+  languages:
+  - generic
+  message: PostgreSQL port published on host; review network access.
+  severity: ERROR
+  metadata:
+    cwe: CWE-284
+    category: security
+    review_required: true
+  pattern-regex: '"5432:5432"'
+- id: bank.published-redis
+  languages:
+  - generic
+  message: Redis port published on host; review ACL and network access.
+  severity: WARNING
+  metadata:
+    cwe: CWE-284
+    category: security
+    review_required: true
+  pattern-regex: '"6379:6379"'
+- id: bank.redis-no-tls
+  languages:
+  - generic
+  message: Redis URL does not request TLS; verify deployment protections.
+  severity: WARNING
+  metadata:
+    cwe: CWE-319
+    category: security
+    review_required: true
+  pattern-regex: redis://redis:6379/0
+- id: bank.cache-empty-hit
+  languages:
+  - python
+  message: Cache hit discards data and returns an empty history.
+  severity: WARNING
+  metadata:
+    cwe: CWE-693
+    category: security
+    review_required: true
+  pattern: "if cached:\n    return []"
+- id: bank.cache-invalidation-key
+  languages:
+  - python
+  message: 'Review cache invalidation: read key also includes limit and search.'
+  severity: WARNING
+  metadata:
+    cwe: CWE-664
+    category: security
+    review_required: true
+  pattern-regex: await\s+\w+\.delete\(f"tx:\{user_id\}"\)
+- id: bank.sql-dynamic-review
+  languages:
+  - python
+  message: 'Dynamic SQL review only: internal index interpolation is NOT proof of
+    SQL injection.'
+  severity: INFO
+  metadata:
+    cwe: CWE-89
+    category: security
+    review_required: true
+  pattern-regex: sql\s*\+=\s*f"[^"\n]+"
